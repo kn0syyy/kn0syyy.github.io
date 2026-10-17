@@ -169,8 +169,8 @@ function build(id){
  s.querySelector('[data-st]').onchange=e=>{st=e.target.checked;draw()};draw();
  const dlFmt=n=>`${L('dlCount')} ${(n||0).toLocaleString(LANG==='en'?'en-US':'ru-RU')}`;
  const setDl=n=>{const c=s.querySelector('[data-dcv]');if(c)c.textContent=dlFmt(n)};
- const dlc=id+'|'+d.file;
- (async()=>{try{const r=await fetch(`https://abacus.jasoncameron.dev/get/${dlc}`);if(!r.ok)throw 0;const n=parseInt(await r.text());setDl(isNaN(n)?0:n)}catch(e){setDl(+localStorage.getItem('ldc:'+id)||0)}})();
+ const dlc=id+'-'+d.file;
+ (async()=>{try{const r=await fetch(`https://abacus.jasoncameron.dev/get/${dlc}`);if(!r.ok){setDl(0);return}const n=parseInt(await r.text());setDl(isNaN(n)?0:n)}catch(e){setDl(+localStorage.getItem('ldc:'+id)||0)}})();
  const dlhit=async()=>{try{const r=await fetch(`https://abacus.jasoncameron.dev/hit/${dlc}`,{method:'POST'});if(!r.ok)throw 0;const n=parseInt(await r.text());if(!isNaN(n))setDl(n)}catch(e){}};
  const mi=s.querySelector('[data-main]');let cur=0;
  const show=i=>{cur=(i+imgs.length)%imgs.length;mi.style.opacity=0;setTimeout(()=>{mi.src=imgs[cur];mi.style.opacity=1},250);s.querySelectorAll('.thumbs button').forEach(x=>x.setAttribute('aria-current',+x.dataset.i===cur))};
