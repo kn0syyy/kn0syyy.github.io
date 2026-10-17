@@ -149,11 +149,13 @@ const L=k=>k?I18N[LANG][k]:I18N[LANG];
 const M=x=>LANG==='en'?(EN_ITEMS[x]||x):x;
 const b64blob=s=>{const b=atob(s),a=new Uint8Array(b.length);for(let i=0;i<b.length;i++)a[i]=b.charCodeAt(i);return new Blob([a],{type:'application/zip'})};
 const fmt=(n,st)=>{if(!st||n<64)return n;const s=Math.floor(n/64),r=n%64;return s+' '+(LANG==='en'?'st.':'ст.')+(r?' + '+r:'')};
+const DLV={};
+const dlFmt=n=>`${L('dlCount')} ${(n||0).toLocaleString(LANG==='en'?'en-US':'ru-RU')}`;
 function build(id){
  const d=DATA[id],t=T[id][LANG],imgs=IMG[id],tot=d.mats.reduce((s,r)=>s+r[1],0),steps=I18N[LANG].steps;
  const s=document.createElement('section');s.className='build';s.id=id;s.dataset.name=t.toLowerCase();
  s.innerHTML=`<h2>${t}</h2><div class="grid"><div class="reveal"><div class="main"><img data-main src="${imgs[0]}" alt="${t}">${imgs.length>1?`<button class="nav p" data-nav="-1" aria-label="${L('photoPrev')}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 5.5 8 12l6.5 6.5"/></svg></button><button class="nav n" data-nav="1" aria-label="${L('photoNext')}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 5.5 16 12l-6.5 6.5"/></svg></button>`:''}</div>${imgs.length>1?`<div class="thumbs">${imgs.map((u,i)=>`<button data-i="${i}" aria-label="${L('photo')} ${i+1}" aria-current="${i===0}"><img src="${u}" alt=""></button>`).join('')}</div>`:''}</div>
- <div class="reveal"><div class="specs"><span class="chip">${L('size')} ${d.size.join('×')}</span><span class="chip">${L('blocks')} ${tot}</span><span class="chip"><span data-dcv aria-live="polite">…</span></span></div>
+ <div class="reveal"><div class="specs"><span class="chip">${L('size')} ${d.size.join('×')}</span><span class="chip">${L('blocks')} ${tot}</span><span class="chip"><span data-dcv aria-live="polite">${dlFmt(DLV[id]??0)}</span></span></div>
  <div class="row"><button class="btn" data-dl>${L('dl')}</button><button class="btn ghost" data-copy>${L('dlList')}</button></div>
  <p class="note" data-msg aria-live="polite">${L('noteZip')}</p>
  <div class="calc"><label>${L('copies')}</label><button class="step" data-m aria-label="${L('less')}">−</button><output data-n>1</output><button class="step" data-p aria-label="${L('more')}">+</button><label class="sw"><input type="checkbox" data-st>${L('stacks')}</label></div>
@@ -167,11 +169,10 @@ function build(id){
  tb.onchange=e=>{const i=+e.target.dataset.i;e.target.checked?done.add(i):done.delete(i);draw()};
  s.querySelector('[data-m]').onclick=()=>{n=Math.max(1,n-1);draw()};s.querySelector('[data-p]').onclick=()=>{n=Math.min(99,n+1);draw()};
  s.querySelector('[data-st]').onchange=e=>{st=e.target.checked;draw()};draw();
- const dlFmt=n=>`${L('dlCount')} ${(n||0).toLocaleString(LANG==='en'?'en-US':'ru-RU')}`;
  const setDl=n=>{const c=s.querySelector('[data-dcv]');if(c)c.textContent=dlFmt(n)};
  const dlc=id+'-'+d.file;
- (async()=>{try{const r=await fetch(`https://abacus.jasoncameron.dev/get/${dlc}`);if(!r.ok){setDl(0);return}const d2=JSON.parse(await r.text());setDl(d2&&typeof d2.value==='number'?d2.value:0)}catch(e){localStorage.setItem('ldc2:'+id,+localStorage.getItem('ldc:'+id)||0);setDl(+localStorage.getItem('ldc:'+id)||0)}})();
- const dlhit=async()=>{try{const r=await fetch(`https://abacus.jasoncameron.dev/hit/${dlc}`);if(!r.ok)throw 0;const d2=JSON.parse(await r.text());if(d2&&typeof d2.value==='number')setDl(d2.value)}catch(e){}};
+
+ const dlhit=async()=>{try{const r=await fetch(`https://abacus.jasoncameron.dev/hit/${dlc}`);if(!r.ok)throw 0;const d2=JSON.parse(await r.text());if(d2&&typeof d2.value==='number'){DLV[id]=d2.value;setDl(d2.value)}}catch(e){}};
  const mi=s.querySelector('[data-main]');let cur=0;
  const show=i=>{cur=(i+imgs.length)%imgs.length;mi.style.opacity=0;setTimeout(()=>{mi.src=imgs[cur];mi.style.opacity=1},250);s.querySelectorAll('.thumbs button').forEach(x=>x.setAttribute('aria-current',+x.dataset.i===cur))};
  s.querySelectorAll('.thumbs button').forEach(b=>b.onclick=()=>show(+b.dataset.i));
@@ -208,6 +209,7 @@ console.log('%cАвтофермы для DonutSMP%c© 2026 kn0syyy — код, �
 document.addEventListener('contextmenu',e=>{if(e.target.tagName==='IMG')e.preventDefault()});
 document.addEventListener('dragstart',e=>{if(e.target.tagName==='IMG')e.preventDefault()});
 applyLang();
+['kelp','middle','bonemeal','drainer'].forEach(async id=>{try{const r=await fetch(`https://abacus.jasoncameron.dev/get/${id}-${DATA[id].file}`);const v=r.ok?(JSON.parse(await r.text()).value||0):0;DLV[id]=v;const c=document.getElementById(id)&&document.getElementById(id).querySelector('[data-dcv]');if(c)c.textContent=dlFmt(DLV[id])}catch(e){DLV[id]=+localStorage.getItem('ldc:'+id)||0;const c=document.getElementById(id)&&document.getElementById(id).querySelector('[data-dcv]');if(c)c.textContent=dlFmt(DLV[id])}});
 $('q').oninput=e=>{const q=e.target.value.trim().toLowerCase();let c=0;
  document.querySelectorAll('.card,.build').forEach(x=>{const h=!x.dataset.name.includes(q);x.hidden=h;if(!h&&x.classList.contains('card'))c++});$('empty').hidden=c>0};
 $('u-go').onclick=async()=>{
