@@ -1,17 +1,17 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Автофермы для DonutSMP</title>
-<meta name="description" content="Схемы автоферм для DonutSMP: фото построек, калькулятор материалов в стаках и скачивание .litematic для Litematica.">
+<title>Auto Farms for DonutSMP</title>
+<meta name="description" content="Auto-farm schematics for DonutSMP: build photos, a material calculator with stacks, and .litematic downloads for Litematica.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%231a1a1d'/%3E%3Ctext x='50' y='70' font-size='54' text-anchor='middle' fill='%23f1f1f2' font-family='Arial' font-weight='bold'%3EФ%3C/text%3E%3C/svg%3E">
-<meta property="og:title" content="Автофермы для DonutSMP">
-<meta property="og:description" content="Схемы для Litematica: фото построек, калькулятор материалов и скачивание .litematic.">
+<meta property="og:title" content="Auto Farms for DonutSMP">
+<meta property="og:description" content="Litematica schematics: build photos, a material calculator and .litematic downloads.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://kn0syyy.github.io/">
 <meta property="og:image" content="https://kn0syyy.github.io/og-image.png">
-<meta property="og.locale" content="ru_RU">
+<meta property="og:locale" content="en_US">
 <meta name="twitter:card" content="summary_large_image">
 <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Onest:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -90,16 +90,16 @@ footer{padding:24px 0}
 </head>
 <body>
 <div class="wrap">
-<header class="top"><div class="hdr"><h1 data-t="docTitle">Автофермы для DonutSMP</h1>
+<header class="top"><div class="hdr"><h1 data-t="docTitle">Auto Farms for DonutSMP</h1>
 <div class="pick"><select id="lang" aria-label="Язык"><option value="ru">RU</option><option value="en">EN</option></select>
 <select id="theme" aria-label="Тема"><option value="dark">Тёмная</option><option value="light">Светлая</option></select></div></div>
-<p class="sub0" data-t="sub">Схемы для Litematica: смотри фото, считай материалы на нужное число копий и скачивай.</p>
-<input class="search" id="q" type="search" placeholder="Поиск по постройкам" aria-label="Поиск по постройкам"></header>
+<p class="sub0" data-t="sub">Litematica schematics: browse photos, count materials for the number of copies you need and download.</p>
+<input class="search" id="q" type="search" placeholder="Search builds" aria-label="Search builds"></header>
 <div class="cards" id="cards"></div>
 <div id="builds"></div>
 <div class="empty" id="empty" hidden>Ничего не найдено. Измени запрос.</div>
-<aside class="support reveal"><div><h2 data-t="supportH">Поддержите создателя на сервере!</h2><p data-t="supportP">Если схемы пригодились, загляните на DonutSMP и поддержите автора. Это помогает делать новые постройки.</p></div>
-<div class="nick"><code id="nick">alrajehi</code><button class="btn" id="cn" data-t="copyNick">Скопировать ник</button></div></aside>
+<aside class="support reveal"><div><h2 data-t="supportH">Support the creator on the server!</h2><p data-t="supportP">If the schematics helped you, visit DonutSMP and support the author. It helps build new creations.</p></div>
+<div class="nick"><code id="nick">alrajehi</code><button class="btn" id="cn" data-t="copyNick">Copy nickname</button></div></aside>
 <footer></footer>
 </div>
 <script>
@@ -112,7 +112,7 @@ const I18N={
  steps:['Скачай и распакуй архив.','Положи .litematic в папку schematics внутри папки игры.','Открой меню Litematica (по умолчанию M), загрузи схему и поставь её на место.']},
  en:{metaDesc:'Auto-farm schematics for DonutSMP: build photos, a material calculator with stacks, and .litematic downloads for Litematica.',docTitle:'Auto Farms for DonutSMP',sub:'Litematica schematics: browse photos, count materials for the number of copies you need and download.',searchPh:'Search builds',searchAria:'Search builds',empty:'Nothing found. Change the query.',supportH:'Support the creator on the server!',supportP:'If the schematics helped you, visit DonutSMP and support the author. It helps build new creations.',copyNick:'Copy nickname',nickCopied:'Nickname copied',nickManual:'Select the nickname manually',size:'Size',blocks:'Blocks',cardBlocks:'blocks',dl:'Download schematic',dlList:'Copy list',noteZip:'The .litematic file is inside the ZIP archive.',dlOk:'Done. Unzip the archive and put the file into the schematics folder.',dlErr:"Couldn't download the file. Try again.",dlCancel:'Download cancelled.',copied:'List copied.',copyErr:"Couldn't copy the list.",copies:'Copies',stacks:'In stacks',less:'Fewer',more:'More',done:'Collected',of:'of',install:'How to install',photo:'Photo',themeDark:'Dark',themeLight:'Light',langAria:'Language',themeAria:'Theme',
  steps:['Download and unzip the archive.','Put the .litematic file into the schematics folder inside your game directory.','Open the Litematica menu (M by default), load the schematic and place it where you want.']}};
-let LANG=localStorage.getItem('lang')||'ru';if(!I18N[LANG])LANG='ru';
+let LANG=localStorage.getItem('lang')||'en';if(!I18N[LANG])LANG='en';
 const L=k=>k?I18N[LANG][k]:I18N[LANG];
 const M=x=>LANG==='en'?(EN_ITEMS[x]||x):x;
 const b64blob=s=>{const b=atob(s),a=new Uint8Array(b.length);for(let i=0;i<b.length;i++)a[i]=b.charCodeAt(i);return new Blob([a],{type:'application/zip'})};
