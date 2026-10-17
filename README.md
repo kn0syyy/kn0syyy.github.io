@@ -7,6 +7,7 @@
 ## Схемы
 
 - **Kelp Starter Farm** — маленькая быстрая ферма ламинарии
+- **Middle Kelp Farm** — средняя ферма ламинарии (18×10×10, с крафтерами)
 - **Starter Bonemeal Farm** — костная мука
 - **Drainer machine** — машина осушения
 
