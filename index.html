@@ -154,7 +154,7 @@ input{width:100%;padding:.75rem .95rem;border-radius:14px;border:1px solid var(-
 <label class="rg"><span>Email</span><input name="email" type="email" autocomplete="email"></label>
 <label><span data-t="fp">Пароль (от 8 символов)</span><input name="pw" type="password" required minlength="8" autocomplete="current-password"></label>
 <p class="err" id="ae" role="alert"></p><button class="btn main" id="as" type="submit">Войти</button>
-<p class="note" data-t="nt">Демо-режим: аккаунт хранится только в этом браузере.</p></form></div>
+<p class="note" data-t="nt">Аккаунт на сервере — вход с любого устройства.</p></form></div>
 <div id="v-acc" hidden><h3 id="an2"></h3><p class="note" id="em2"></p><p class="note"><span data-t="ab">Статус:</span> <span id="pl">BETA</span></p><br><button class="btn" id="lo" type="button" data-t="lo">Выйти</button></div>
 </div></div>
 <div class="md" id="cm" hidden><div class="box" role="dialog" aria-modal="true" aria-label="Checkout"><button class="x" type="button" data-close aria-label="Close">×</button><h3 data-t="ch">Оформление заказа</h3>
@@ -172,64 +172,245 @@ ft:'DonutVisuals is an unofficial mod, not affiliated with Mojang or Microsoft.'
 let lang=(navigator.language||'').startsWith('ru')?'ru':'en';try{lang=localStorage.getItem('dv-lang')||lang}catch(e){}
 function setLang(l){lang=l;document.querySelectorAll('[data-t]').forEach(e=>{if(!e.dataset.ru)e.dataset.ru=e.textContent;e.textContent=l==='en'?EN[e.dataset.t]:e.dataset.ru});
 root.lang=l;$('#lg').textContent=l==='en'?'RU':'EN';try{localStorage.setItem('dv-lang',l)}catch(e){}if(window.refresh)refresh()}
-$('#lg').onclick=()=>setLang(lang==='en'?'ru':'en');setLang(lang);
+$('#lg').onclick=()=>setLang(lang==='en'?'ru':'en');
 document.querySelectorAll('.mod').forEach(b=>b.onclick=()=>{const on=b.getAttribute('aria-checked')!=='true';b.setAttribute('aria-checked',on);document.body.classList.toggle('on-'+b.dataset.m,on)});
 addEventListener('pointerdown',e=>{if(!document.body.classList.contains('on-hit')||e.target.closest('button,a'))return;
 const w=document.createElement('div');w.className='wave';w.style.left=e.clientX+'px';w.style.top=e.clientY+'px';document.body.appendChild(w);w.onanimationend=()=>w.remove()});
 addEventListener('pointermove',e=>{if(RM)return;root.style.setProperty('--px',((e.clientX/innerWidth)-.5)*-26+'px');root.style.setProperty('--py',((e.clientY/innerHeight)-.5)*-16+'px')});
 
+/* ===== Cloudflare Worker + D1 auth =====
+   После деплоя замени YOUR_SUBDOMAIN на свой:
+   const API = 'https://donutvisuals-auth.funpaygosell.workers.dev';
+*/
+const API = 'https://donutvisuals-auth.funpaygosell.workers.dev';
+const CUR = '₽';
+const TOKEN_KEY = 'dv-token';
 
-
-/* ===== аккаунт (демо) =====
-   Оплата и косметика убраны: клиент BETA, косметика уже в клиенте. */
-const CUR='₽';
-Object.assign(EN,{
-  n4:'Pricing',h5:'Subscription',l5:'Payments are temporarily unavailable. Client is in BETA — stay tuned.',
-  t1:'Log in',t2:'Sign up',fn:'Minecraft nickname',fp:'Password (8+ characters)',
-  nt:'Demo mode: account lives only in this browser.',
-  ab:'Status:',lo:'Log out',ch:'Checkout',dmn:'Payments temporarily unavailable.',
-  beta:'BETA — temporarily unavailable'
+Object.assign(EN, {
+  n4: 'Pricing',
+  h5: 'Subscription',
+  l5: 'Payments are temporarily unavailable. Client is in BETA — stay tuned.',
+  t1: 'Log in',
+  t2: 'Sign up',
+  fn: 'Minecraft nickname',
+  fp: 'Password (8+ characters)',
+  nt: 'Account is stored on the server — works from any device.',
+  ab: 'Status:',
+  lo: 'Log out',
+  ch: 'Checkout',
+  dmn: 'Payments temporarily unavailable.',
+  beta: 'BETA — temporarily unavailable'
 });
 
+const L = (r, e) => (lang === 'en' ? e : r);
+const md = (id) => document.getElementById(id);
 
-const L=(r,e)=>lang==='en'?e:r;
-const ls=(k,v)=>{try{if(v===undefined)return JSON.parse(localStorage.getItem(k));localStorage.setItem(k,JSON.stringify(v))}catch(e){return null}};
-let U=ls('dv-users')||{},S=ls('dv-s'),mode='login',pend=null,cur=null;
-const me=()=>S&&U[S]||null,md=id=>document.getElementById(id);
-const hex=async s=>crypto.subtle?[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s)))].map(b=>b.toString(16).padStart(2,'0')).join(''):btoa(unescape(encodeURIComponent(s)));
-const toast=t=>{const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('on'),2600)};
-const open=id=>{md(id).hidden=false;const f=md(id).querySelector('input:not([hidden])');f&&f.focus()};
-document.querySelectorAll('.md').forEach(m=>m.addEventListener('click',e=>{if(e.target===m||e.target.closest('[data-close]'))m.hidden=true}));
-addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.md').forEach(m=>m.hidden=true)});
-function tab(m){mode=m;document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('on',b.dataset.tab===m));const f=$('#af');f.classList.toggle('reg',m==='reg');f.elements.email.required=m==='reg';f.elements.pw.autocomplete=m==='reg'?'new-password':'current-password';$('#as').textContent=m==='reg'?L('Создать аккаунт','Create account'):L('Войти','Log in');$('#ae').textContent=''}
-function paint(){const u=me();$('#an').textContent=u?u.nick:L('Гость','Guest');$('#ar').textContent=u?L('аккаунт','account'):L('войти','log in')}
-function showAcc(){const u=me();md('v-auth').hidden=!!u;md('v-acc').hidden=!u;if(u){$('#an2').textContent=u.nick;$('#em2').textContent=u.email||'';const pl=$('#pl');if(pl)pl.textContent='BETA'}}
-function renderShop(){
-  const plans=[
-    {n:'1 месяц',ne:'1 month',p:50},
-    {n:'6 месяцев',ne:'6 months',p:200},
-    {n:'Навсегда',ne:'Lifetime',p:400}
+function getToken() {
+  try { return localStorage.getItem(TOKEN_KEY); } catch { return null; }
+}
+function setToken(t) {
+  try {
+    if (t) localStorage.setItem(TOKEN_KEY, t);
+    else localStorage.removeItem(TOKEN_KEY);
+  } catch {}
+}
+
+async function api(path, { method = 'GET', body, auth = false } = {}) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (auth) {
+    const t = getToken();
+    if (t) headers.Authorization = 'Bearer ' + t;
+  }
+  let res;
+  try {
+    res = await fetch(API + path, {
+      method,
+      headers,
+      body: body ? JSON.stringify(body) : undefined
+    });
+  } catch (e) {
+    const err = new Error('network');
+    err.code = 'network';
+    throw err;
+  }
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const err = new Error(data.error || 'request_failed');
+    err.code = data.error || 'request_failed';
+    err.status = res.status;
+    throw err;
+  }
+  return data;
+}
+
+let currentUser = null;
+let mode = 'login';
+
+const toast = (t) => {
+  const e = $('#toast');
+  e.textContent = t;
+  e.classList.add('on');
+  clearTimeout(toast.t);
+  toast.t = setTimeout(() => e.classList.remove('on'), 2600);
+};
+const open = (id) => {
+  md(id).hidden = false;
+  const f = md(id).querySelector('input:not([hidden])');
+  f && f.focus();
+};
+
+document.querySelectorAll('.md').forEach((box) =>
+  box.addEventListener('click', (e) => {
+    if (e.target === box || e.target.closest('[data-close]')) box.hidden = true;
+  })
+);
+addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') document.querySelectorAll('.md').forEach((box) => (box.hidden = true));
+});
+
+function tab(m) {
+  mode = m;
+  document.querySelectorAll('[data-tab]').forEach((b) => b.classList.toggle('on', b.dataset.tab === m));
+  const f = $('#af');
+  f.classList.toggle('reg', m === 'reg');
+  f.elements.email.required = m === 'reg';
+  f.elements.pw.autocomplete = m === 'reg' ? 'new-password' : 'current-password';
+  $('#as').textContent = m === 'reg' ? L('Создать аккаунт', 'Create account') : L('Войти', 'Log in');
+  $('#ae').textContent = '';
+}
+
+function paint() {
+  const u = currentUser;
+  $('#an').textContent = u ? u.nick : L('Гость', 'Guest');
+  $('#ar').textContent = u ? L('аккаунт', 'account') : L('войти', 'log in');
+}
+
+function showAcc() {
+  const u = currentUser;
+  md('v-auth').hidden = !!u;
+  md('v-acc').hidden = !u;
+  if (u) {
+    $('#an2').textContent = u.nick;
+    $('#em2').textContent = u.email || '';
+    const pl = $('#pl');
+    if (pl) pl.textContent = u.status || 'BETA';
+  }
+}
+
+function renderShop() {
+  const plans = [
+    { n: '1 месяц', ne: '1 month', p: 50 },
+    { n: '6 месяцев', ne: '6 months', p: 200 },
+    { n: 'Навсегда', ne: 'Lifetime', p: 400 }
   ];
-  md('cg').innerHTML=plans.map(p=>{
-    const name=lang==='en'?p.ne:p.n;
-    return `<div class="cos"><b>${name}</b><div><span class="pr">${p.p} ${CUR}</span><button type="button" disabled>${L('BETA','BETA')}</button></div></div>`;
-  }).join('')+`<p class="note" style="grid-column:1/-1;margin-top:.6rem">${L('Оплата временно недоступна. Косметика уже встроена в клиент.','Payments temporarily unavailable. Cosmetics are already built into the client.')}</p>`;
+  md('cg').innerHTML =
+    plans
+      .map((p) => {
+        const name = lang === 'en' ? p.ne : p.n;
+        return `<div class="cos"><b>${name}</b><div><span class="pr">${p.p} ${CUR}</span><button type="button" disabled>${L('BETA', 'BETA')}</button></div></div>`;
+      })
+      .join('') +
+    `<p class="note" style="grid-column:1/-1;margin-top:.6rem">${L(
+      'Оплата временно недоступна. Косметика уже встроена в клиент.',
+      'Payments temporarily unavailable. Cosmetics are already built into the client.'
+    )}</p>`;
 }
-function updateDl(){
-  const btn=$('#dlbtn'),note=$('#dlnote');
-  if(btn){btn.style.opacity='.45';btn.style.pointerEvents='none';btn.textContent=L('BETA — скоро','BETA — soon')}
-  if(note)note.textContent=L('Временно недоступно','Temporarily unavailable');
-}
-document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>tab(b.dataset.tab));
-$('#acc').onclick=()=>{tab('login');showAcc();open('am')};
-$('#lo').onclick=()=>{S=null;ls('dv-s',null);md('am').hidden=true;refresh()};
-$('#af').onsubmit=async e=>{e.preventDefault();const f=e.target,k=f.elements.nick.value.trim().toLowerCase(),err=m=>{$('#ae').textContent=m};
-if(mode==='reg'){if(U[k])return err(L('Этот ник уже занят.','This nickname is taken.'));const salt=Math.random().toString(36).slice(2);U[k]={nick:f.elements.nick.value.trim(),email:f.elements.email.value.trim(),salt,hash:await hex(salt+f.elements.pw.value)};ls('dv-users',U)}
-else{const u=U[k];if(!u||u.hash!==await hex(u.salt+f.elements.pw.value))return err(L('Неверный ник или пароль.','Wrong nickname or password.'))}
-S=k;ls('dv-s',S);f.reset();md('am').hidden=true;refresh();toast(L('Добро пожаловать, ','Welcome, ')+U[k].nick);};
-window.refresh=()=>{tab(mode);paint();renderShop();showAcc();updateDl()};
 
-setLang(lang);
+function updateDl() {
+  const btn = $('#dlbtn'), note = $('#dlnote');
+  if (btn) {
+    btn.style.opacity = '.45';
+    btn.style.pointerEvents = 'none';
+    btn.textContent = L('BETA — скоро', 'BETA — soon');
+  }
+  if (note) note.textContent = L('Временно недоступно', 'Temporarily unavailable');
+}
+
+function errMsg(code) {
+  const map = {
+    nick_taken: L('Этот ник уже занят.', 'This nickname is taken.'),
+    bad_nick: L('Ник: 3–16 символов, латиница, цифры, _', 'Nick: 3–16 chars, letters, numbers, _'),
+    bad_password: L('Пароль от 8 символов.', 'Password must be 8+ characters.'),
+    invalid_credentials: L('Неверный ник или пароль.', 'Wrong nickname or password.'),
+    network: L('Нет связи с сервером. Проверь API URL или интернет.', 'Cannot reach server. Check API URL or network.'),
+    unauthorized: L('Сессия истекла — войди снова.', 'Session expired — log in again.')
+  };
+  return map[code] || L('Ошибка. Попробуй ещё раз.', 'Something went wrong. Try again.');
+}
+
+document.querySelectorAll('[data-tab]').forEach((b) => (b.onclick = () => tab(b.dataset.tab)));
+$('#acc').onclick = () => {
+  tab('login');
+  showAcc();
+  open('am');
+};
+$('#lo').onclick = async () => {
+  try { await api('/logout', { method: 'POST', auth: true }); } catch {}
+  setToken(null);
+  currentUser = null;
+  md('am').hidden = true;
+  refresh();
+  toast(L('Вы вышли', 'Logged out'));
+};
+
+$('#af').onsubmit = async (e) => {
+  e.preventDefault();
+  const f = e.target;
+  const nick = f.elements.nick.value.trim();
+  const password = f.elements.pw.value;
+  const email = f.elements.email ? f.elements.email.value.trim() : '';
+  const btn = $('#as');
+  const err = (m) => { $('#ae').textContent = m; };
+  err('');
+  btn.disabled = true;
+  const prev = btn.textContent;
+  btn.textContent = '…';
+  try {
+    const data = mode === 'reg'
+      ? await api('/register', { method: 'POST', body: { nick, password, email: email || undefined } })
+      : await api('/login', { method: 'POST', body: { nick, password } });
+    setToken(data.token);
+    currentUser = data.user;
+    f.reset();
+    md('am').hidden = true;
+    refresh();
+    toast(L('Добро пожаловать, ', 'Welcome, ') + currentUser.nick);
+  } catch (ex) {
+    err(errMsg(ex.code || 'request_failed'));
+  } finally {
+    btn.disabled = false;
+    btn.textContent = prev;
+  }
+};
+
+async function restoreSession() {
+  if (!getToken() || API.includes('YOUR_SUBDOMAIN')) {
+    currentUser = null;
+    return;
+  }
+  try {
+    const data = await api('/me', { auth: true });
+    currentUser = data.user;
+  } catch {
+    setToken(null);
+    currentUser = null;
+  }
+}
+
+window.refresh = () => {
+  tab(mode);
+  paint();
+  renderShop();
+  showAcc();
+  updateDl();
+};
+
+(async () => {
+  await restoreSession();
+  setLang(lang);
+  refresh();
+})();
+
 </script>
 </body>
 </html>
