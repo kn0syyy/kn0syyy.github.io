@@ -81,6 +81,11 @@ form label{display:block;margin-bottom:.9rem}form label span{display:block;margi
 input{width:100%;padding:.75rem .95rem;border-radius:14px;border:1px solid var(--line);background:#050a18;color:var(--ink);font:inherit}input:focus{outline:none;border-color:var(--glow);box-shadow:0 0 0 3px rgba(108,151,255,.2)}
 .rg{display:none!important}.reg .rg{display:block!important}.err{min-height:1.3em;margin:0 0 .6rem;color:#ff8fa3;font-size:.92rem}
 .note{margin:.9rem 0 0;color:var(--soft);font-size:.88rem}.box .btn{width:100%;text-align:center;cursor:pointer}
+.mcbox{margin:1rem 0 0;padding:.85rem 1rem;border-radius:16px;border:1px solid var(--line);background:rgba(47,107,255,.07)}
+.mcbox code{font-family:Silkscreen,"Courier New",monospace;font-size:.78rem;color:var(--glow);word-break:break-all}
+.mcrow{display:flex;gap:.5rem;margin-top:.6rem}
+.mcrow input{flex:1;min-width:0;font:400 .82rem/1.4 Silkscreen,"Courier New",monospace;color:var(--ink);background:#070d1c;border:1px solid var(--line);border-radius:10px;padding:.5rem .6rem}
+.mcrow .btn{width:auto;flex:0 0 auto;padding:.5rem .9rem}
 .sum{display:flex;justify-content:space-between;align-items:center;padding:1rem 1.1rem;margin-bottom:1rem;border-radius:18px;background:var(--panel)}
 #toast{position:fixed;z-index:70;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 24px);transform:translate(-50%,30px);opacity:0;pointer-events:none;background:#0d2a58;border:1px solid var(--glow);padding:.7rem 1.2rem;border-radius:999px;transition:.35s;max-width:92vw;text-align:center}#toast.on{opacity:1;transform:translate(-50%,0)}
 @media(max-width:700px){.shop{grid-template-columns:1fr}.prev{padding:.8rem}#acc{margin-left:0}}
@@ -155,7 +160,11 @@ input{width:100%;padding:.75rem .95rem;border-radius:14px;border:1px solid var(-
 <label><span data-t="fp">Пароль (от 8 символов)</span><input name="pw" type="password" required minlength="8" autocomplete="current-password"></label>
 <p class="err" id="ae" role="alert"></p><button class="btn main" id="as" type="submit">Войти</button>
 <p class="note" data-t="nt">Аккаунт на сервере — вход с любого устройства.</p></form></div>
-<div id="v-acc" hidden><h3 id="an2"></h3><p class="note" id="em2"></p><p class="note"><span data-t="ab">Статус:</span> <span id="pl">BETA</span></p><br><button class="btn" id="lo" type="button" data-t="lo">Выйти</button></div>
+<div id="v-acc" hidden><h3 id="an2"></h3><p class="note" id="em2"></p><p class="note"><span data-t="ab">Статус:</span> <span id="pl">BETA</span></p>
+<div class="mcbox"><p class="note" data-t="mcl">Связка с Minecraft: скопируй токен и введи его в игре — после этого ты увидишь аватары, косметику и эмоции других игроков DonutVisuals.</p>
+<p class="note">Команда в чате: <code>.account token &lt;токен&gt;</code></p>
+<div class="mcrow"><input id="dvtoken" readonly spellcheck="false" aria-label="DonutVisuals token"><button class="btn" id="cp" type="button" data-t="cpy">Скопировать</button></div></div>
+<br><button class="btn" id="lo" type="button" data-t="lo">Выйти</button></div>
 </div></div>
 <div class="md" id="cm" hidden><div class="box" role="dialog" aria-modal="true" aria-label="Checkout"><button class="x" type="button" data-close aria-label="Close">×</button><h3 data-t="ch">Оформление заказа</h3>
 <div class="sum"><b id="cn"></b><span class="pr" id="cp2"></span></div><p class="note" id="dm" data-t="dmn">Демо-режим: деньги не списываются.</p><br><button class="btn main" id="pay" type="button"></button></div></div>
@@ -197,6 +206,8 @@ Object.assign(EN, {
   nt: 'Account is stored on the server — works from any device.',
   ab: 'Status:',
   lo: 'Log out',
+  mcl: 'Minecraft link: copy the token and paste it in the game — after that you will see avatars, cosmetics and emotions of other DonutVisuals players.',
+  cpy: 'Copy',
   ch: 'Checkout',
   dmn: 'Payments temporarily unavailable.',
   beta: 'BETA — temporarily unavailable'
@@ -294,6 +305,8 @@ function showAcc() {
     $('#em2').textContent = u.email || '';
     const pl = $('#pl');
     if (pl) pl.textContent = u.status || 'BETA';
+    const tk = $('#dvtoken');
+    if (tk) tk.value = getToken() || '';
   }
 }
 
@@ -351,6 +364,24 @@ $('#lo').onclick = async () => {
   md('am').hidden = true;
   refresh();
   toast(L('Вы вышли', 'Logged out'));
+};
+$('#cp').onclick = async () => {
+  const t = getToken();
+  if (!t) {
+    toast(L('Токен недоступен', 'No token available'));
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(t);
+    toast(L('Токен скопирован', 'Token copied'));
+  } catch {
+    const el = $('#dvtoken');
+    if (el) {
+      el.focus();
+      el.select();
+    }
+    toast(L('Скопируй токен вручную', 'Copy the token manually'));
+  }
 };
 
 $('#af').onsubmit = async (e) => {
